@@ -5,16 +5,31 @@ make_black_midi.py
 Download audio from a YouTube URL and convert it into a "Black MIDI" file by mapping every
 spectral bin above a threshold to individual piano note events.
 
+Features:
+- Automatically marks itself executable on first run
+- Interactive prompts if URL or output path aren’t provided as arguments
+
 Usage:
-    python make_black_midi.py <YouTube_URL> <output.mid> [--threshold 0.02] [--hop 256] [--nfft 4096] [--res 960]
+    ./make_black_midi.py [YouTube_URL] [output.mid] [--threshold 0.02] [--hop 256] [--nfft 4096] [--res 960]
 """
-import argparse
 import os
+import stat
 import subprocess
+import sys
 from pytube import YouTube
 import librosa
 import numpy as np
 import pretty_midi
+import argparse
+
+# Ensure the script file is executable by the user
+try:
+    file_path = os.path.realpath(__file__)
+    st = os.stat(file_path)
+    os.chmod(file_path, st.st_mode | stat.S_IXUSR)
+except Exception:
+    pass
+
 
 def download_audio(youtube_url: str, out_path: str = "audio.wav") -> str:
     """
@@ -78,8 +93,8 @@ def main():
     parser = argparse.ArgumentParser(
         description="Convert YouTube audio to a Black MIDI file."
     )
-    parser.add_argument('url', help='YouTube video URL')
-    parser.add_argument('output', help='Path for the output MIDI file')
+    parser.add_argument('url', nargs='?', help='YouTube video URL')
+    parser.add_argument('output', nargs='?', help='Path for the output MIDI file')
     parser.add_argument('--threshold', type=float, default=0.02,
                         help='Magnitude threshold for note creation')
     parser.add_argument('--hop', type=int, default=256,
@@ -89,6 +104,12 @@ def main():
     parser.add_argument('--res', type=int, default=960,
                         help='MIDI resolution (ticks per quarter note)')
     args = parser.parse_args()
+
+    # Interactive prompts if missing
+    if not args.url:
+        args.url = input("Enter YouTube video URL: ").strip()
+    if not args.output:
+        args.output = input("Enter output MIDI file path (e.g. output.mid): ").strip()
 
     print(f"Downloading audio from {args.url}...")
     audio_file = download_audio(args.url, out_path="temp_audio.wav")
