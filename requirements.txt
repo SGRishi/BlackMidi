@@ -1,0 +1,4 @@
+pytube            # for downloading YouTube audio
+librosa           # for STFT and audio loading
+numpy             # array math
+pretty_midi       # MIDI file creation
